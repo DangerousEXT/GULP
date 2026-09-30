@@ -3,22 +3,29 @@ using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Transporting;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ShittySpawner : MonoBehaviour
 {
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private List<Transform> spawnPoints = new();
+
+    private int nextIndex = 0;
 
     private IEnumerator Start()
     {
         yield return new WaitUntil(() => InstanceFinder.NetworkManager != null);
         Debug.Log("ShittySpawner: NetworkManager найден");
+
         InstanceFinder.ServerManager.OnRemoteConnectionState += OnClientConnected;
-        if (InstanceFinder.IsServerStarted && InstanceFinder.IsClientStarted)
-        {
-            Debug.Log("Спавним хоста");
-            SpawnPlayer(InstanceFinder.ClientManager.Connection);
-        }
+
+        // Ждём, пока хост подключится и как сервер, и как клиент
+        yield return new WaitUntil(() =>
+            InstanceFinder.IsServerStarted && InstanceFinder.IsClientStarted);
+
+        Debug.Log("Спавним хоста");
+        SpawnPlayer(InstanceFinder.ClientManager.Connection);
     }
 
     private void OnDestroy()
@@ -36,10 +43,25 @@ public class ShittySpawner : MonoBehaviour
 
     private void SpawnPlayer(NetworkConnection conn)
     {
-        Debug.Log("Спавним игрока");
-        var player = Instantiate(playerPrefab,
-            new Vector3(Random.Range(-3f, 3f), 1f, Random.Range(-3f, 3f)),
-            Quaternion.identity);
+        var point = GetNextSpawnPoint();
+        if (point == null)
+        {
+            Debug.LogError("ShittySpawner: нет точек спавна!");
+            return;
+        }
+
+        Debug.Log($"Спавним игрока в {nextIndex}");
+        var player = Instantiate(playerPrefab, point.position, point.rotation);
         InstanceFinder.ServerManager.Spawn(player, conn);
+    }
+
+    private Transform GetNextSpawnPoint()
+    {
+        if (spawnPoints == null || spawnPoints.Count == 0)
+            return null;
+
+        var point = spawnPoints[nextIndex];
+        nextIndex = (nextIndex + 1) % spawnPoints.Count;
+        return point;
     }
 }
