@@ -30,4 +30,9 @@ public class BasicHoverAnim : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         transform.DOKill();
         transform.DOLocalMoveX(originalPosition.x, moveDuration).SetEase(moveEase);
     }
+
+    private void OnDestroy()
+    {
+        transform.DOKill();
+    }
 }

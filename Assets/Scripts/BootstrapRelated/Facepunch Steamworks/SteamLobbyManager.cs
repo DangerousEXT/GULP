@@ -1,3 +1,4 @@
+using FishNet;
 using Steamworks;
 using Steamworks.Data;
 using System;
@@ -79,21 +80,19 @@ public class SteamLobbyManager : MonoBehaviour, IInitializable, IDisposable
 
     private void OnLobbyCreated(Result result, Lobby lobby)
     {
-        if (result != Result.OK)
-        {
-            Debug.LogError($"Ошибка создания лобби: {result}");
-            return;
-        }
-        Debug.Log("Лобби создано, запускаем сервер");
-        // InstanceFinder.ServerManager.StartConnection();
+        if (result != Result.OK) return;
+        Debug.Log("Запускаем сервер");
+        InstanceFinder.ServerManager.StartConnection();
+        InstanceFinder.ClientManager.StartConnection(SteamClient.SteamId.ToString());
     }
 
     private void OnLobbyEntered(Lobby lobby)
     {
-        Debug.Log($"Вошли в лобби {lobby.Id}");
-        if (lobby.Owner.Id == SteamClient.SteamId) return;
-        Debug.Log("Мы клиент, подключаемся к хосту");
-        // InstanceFinder.ClientManager.StartConnection(lobby.Owner.Id.ToString());
+        currentLobby = lobby;
+        LobbyEntered?.Invoke(lobby);
+        if (lobby.Owner.Id == SteamClient.SteamId) 
+            return;
+        InstanceFinder.ClientManager.StartConnection(lobby.Owner.Id.ToString());
     }
 
     private void OnLobbyMemberJoined(Lobby lobby, Friend friend)
