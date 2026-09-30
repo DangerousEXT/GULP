@@ -19,8 +19,18 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dfb440a7b2cfa6142bd40f17d902fada, type: 2}
   - {fileID: 11400000, guid: 03f18c32933f2144d941c3e5ee6308e9, type: 2}
   - {fileID: 11400000, guid: 83149957bf42c6249a8c8f736d026abf, type: 2}
-  m_Extensions: []
+  m_Extensions:
+  - rid: 2886521066930307142
   m_Group: String Table
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 2886521066930307142
+      type: {class: GoogleSheetsExtension, ns: UnityEditor.Localization.Plugins.Google, asm: Unity.Localization.Editor}
+      data:
+        m_Collection: {fileID: 11400000}
+        m_SheetsServiceProvider: {fileID: 0}
+        m_SpreadsheetId: 
+        m_SheetId: 0
+        m_Columns: []
+        m_RemoveMissingPulledKeys: 1

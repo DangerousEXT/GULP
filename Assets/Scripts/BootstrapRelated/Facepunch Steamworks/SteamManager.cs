@@ -1,33 +1,39 @@
-using UnityEngine;
+using Steamworks;
 using System;
+using UnityEngine;
+using Zenject;
 
-public class SteamManager : MonoBehaviour
+public class SteamManager : MonoBehaviour, IInitializable, IDisposable
 {
-    [SerializeField] private uint appId = 480; //spacewar
-    public bool Init()
+    [SerializeField] private uint appId = 480; //Spacewar
+
+    public void Initialize()
     {
         try
         {
-            Steamworks.SteamClient.Init(appId, true);
-            Debug.Log("steam works");
-            return true;
+            SteamClient.Init(appId, false);
+            Debug.Log("Steam инициализирован");
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Debug.Log(e.Message);
-            return false;
         }
     }
 
-    private void OnApplicationQuit()
+    public void Dispose()
     {
         try
         {
-            Steamworks.SteamClient.Shutdown();
+            SteamClient.Shutdown();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Debug.Log(e.Message);
         }
+    }
+
+    private void Update()
+    {
+        SteamClient.RunCallbacks();
     }
 }

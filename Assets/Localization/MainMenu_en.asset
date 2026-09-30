@@ -38,6 +38,22 @@ MonoBehaviour:
     m_Localized: Quit
     m_Metadata:
       m_Items: []
+  - m_Id: 475032078249984
+    m_Localized: Leave
+    m_Metadata:
+      m_Items: []
+  - m_Id: 475033667891200
+    m_Localized: Parameters
+    m_Metadata:
+      m_Items: []
+  - m_Id: 475035102343168
+    m_Localized: Invite
+    m_Metadata:
+      m_Items: []
+  - m_Id: 475420210753536
+    m_Localized: Start Game
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
