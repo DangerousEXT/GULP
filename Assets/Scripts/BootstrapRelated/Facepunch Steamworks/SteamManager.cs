@@ -25,7 +25,8 @@ public class SteamManager : MonoBehaviour, IInitializable, IDisposable
     {
         try
         {
-            SteamClient.Shutdown();
+            if (SteamClient.IsValid)
+                SteamClient.Shutdown();
         }
         catch (Exception e)
         {
