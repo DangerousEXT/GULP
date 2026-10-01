@@ -73,6 +73,18 @@ public class SteamLobbyManager : MonoBehaviour, IInitializable, IDisposable
 
     public void LeaveLobby()
     {
+        if (InstanceFinder.IsClientStarted)
+        {
+            InstanceFinder.ClientManager.StopConnection();
+            Debug.Log("Client stopped");
+        }
+            
+        if (InstanceFinder.IsServerStarted)
+        {
+            InstanceFinder.ServerManager.StopConnection(true);
+            Debug.Log("Server stopped");
+        }
+            
         if (!currentLobby.HasValue) return;
         currentLobby.Value.Leave();
         currentLobby = null;
