@@ -40,7 +40,7 @@ public class SteamLobbyManager : MonoBehaviour, IInitializable, IDisposable
             var result = await SteamMatchmaking.CreateLobbyAsync(maxPlayers);
             if (!result.HasValue)
             {
-                Debug.LogError("Не удалось создать лобби");
+                Debug.Log("Не удалось создать лобби");
                 return;
             }
             currentLobby = result.Value;
@@ -49,7 +49,7 @@ public class SteamLobbyManager : MonoBehaviour, IInitializable, IDisposable
         }
         catch (Exception e)
         {
-            Debug.LogError(e.Message);
+            Debug.Log(e.Message);
         }
     }
 
@@ -60,19 +60,31 @@ public class SteamLobbyManager : MonoBehaviour, IInitializable, IDisposable
             var result = await SteamMatchmaking.JoinLobbyAsync(lobbyId);
             if (!result.HasValue)
             {
-                Debug.LogError("Не удалось присоединиться");
+                Debug.Log("Не удалось присоединиться");
                 return;
             }
             currentLobby = result.Value;
         }
         catch (Exception e)
         {
-            Debug.LogError(e.Message);
+            Debug.Log(e.Message);
         }
     }
 
     public void LeaveLobby()
     {
+        if (InstanceFinder.IsClientStarted)
+        {
+            InstanceFinder.ClientManager.StopConnection();
+            Debug.Log("Client stopped");
+        }
+            
+        if (InstanceFinder.IsServerStarted)
+        {
+            InstanceFinder.ServerManager.StopConnection(true);
+            Debug.Log("Server stopped");
+        }
+            
         if (!currentLobby.HasValue) return;
         currentLobby.Value.Leave();
         currentLobby = null;

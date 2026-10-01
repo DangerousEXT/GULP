@@ -1,67 +1,58 @@
-using FishNet;
-using FishNet.Connection;
-using FishNet.Object;
-using FishNet.Transporting;
 using System.Collections;
 using System.Collections.Generic;
+using FishNet;
+using FishNet.Connection;
+using FishNet.Managing;
+using FishNet.Managing.Scened;
+using FishNet.Object;
 using UnityEngine;
 
 public class ShittySpawner : MonoBehaviour
 {
     [SerializeField] private NetworkObject playerPrefab;
-    [SerializeField] private List<Transform> spawnPoints = new();
+    [SerializeField] private Transform[] spawnPoints;
 
-    private int nextIndex = 0;
+    private NetworkManager nm;
+    private readonly HashSet<NetworkConnection> spawned = new();
 
     private IEnumerator Start()
     {
         yield return new WaitUntil(() => InstanceFinder.NetworkManager != null);
-        Debug.Log("ShittySpawner: NetworkManager найден");
+        nm = InstanceFinder.NetworkManager;
 
-        InstanceFinder.ServerManager.OnRemoteConnectionState += OnClientConnected;
+        // на чистом клиенте спавнить нечего
+        if (!nm.IsServerStarted) yield break;
 
-        // Ждём, пока хост подключится и как сервер, и как клиент
-        yield return new WaitUntil(() =>
-            InstanceFinder.IsServerStarted && InstanceFinder.IsClientStarted);
+        nm.SceneManager.OnClientPresenceChangeEnd += OnPresenceChanged;
 
-        Debug.Log("Спавним хоста");
-        SpawnPlayer(InstanceFinder.ClientManager.Connection);
+        // те, кто уже в этой сцене
+        foreach (var conn in nm.ServerManager.Clients.Values)
+        {
+            if (conn.Scenes.Contains(gameObject.scene))
+                SpawnFor(conn);
+        }
     }
 
     private void OnDestroy()
     {
-        if (InstanceFinder.ServerManager != null)
-            InstanceFinder.ServerManager.OnRemoteConnectionState -= OnClientConnected;
+        if (nm != null)
+            nm.SceneManager.OnClientPresenceChangeEnd -= OnPresenceChanged;
     }
 
-    private void OnClientConnected(NetworkConnection conn, RemoteConnectionStateArgs args)
+    private void OnPresenceChanged(ClientPresenceChangeEventArgs args)
     {
-        Debug.Log($"Клиент подключился: {args.ConnectionState}");
-        if (args.ConnectionState != RemoteConnectionState.Started) return;
-        SpawnPlayer(conn);
+        if (!args.Added) return;
+        if (args.Scene != gameObject.scene) return;
+        SpawnFor(args.Connection);
     }
 
-    private void SpawnPlayer(NetworkConnection conn)
+    private void SpawnFor(NetworkConnection conn)
     {
-        var point = GetNextSpawnPoint();
-        if (point == null)
-        {
-            Debug.LogError("ShittySpawner: нет точек спавна!");
-            return;
-        }
+        if (!spawned.Add(conn)) return; // защита от дублей
 
-        Debug.Log($"Спавним игрока в {nextIndex}");
-        var player = Instantiate(playerPrefab, point.position, point.rotation);
-        InstanceFinder.ServerManager.Spawn(player, conn);
-    }
-
-    private Transform GetNextSpawnPoint()
-    {
-        if (spawnPoints == null || spawnPoints.Count == 0)
-            return null;
-
-        var point = spawnPoints[nextIndex];
-        nextIndex = (nextIndex + 1) % spawnPoints.Count;
-        return point;
+        Transform point = spawnPoints[(spawned.Count - 1) % spawnPoints.Length];
+        NetworkObject nob = Instantiate(playerPrefab, point.position, point.rotation);
+        UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(nob.gameObject, gameObject.scene);
+        nm.ServerManager.Spawn(nob, conn);
     }
 }

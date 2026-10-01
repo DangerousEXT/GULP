@@ -9,6 +9,7 @@ public class SteamManager : MonoBehaviour, IInitializable, IDisposable
 
     public void Initialize()
     {
+        if (SteamClient.IsValid) return;
         try
         {
             SteamClient.Init(appId, false);
@@ -24,7 +25,8 @@ public class SteamManager : MonoBehaviour, IInitializable, IDisposable
     {
         try
         {
-            SteamClient.Shutdown();
+            if (SteamClient.IsValid)
+                SteamClient.Shutdown();
         }
         catch (Exception e)
         {
@@ -34,6 +36,7 @@ public class SteamManager : MonoBehaviour, IInitializable, IDisposable
 
     private void Update()
     {
-        SteamClient.RunCallbacks();
+        if(SteamClient.IsValid)
+            SteamClient.RunCallbacks();
     }
 }
