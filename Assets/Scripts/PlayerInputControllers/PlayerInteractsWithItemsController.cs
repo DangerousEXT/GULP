@@ -14,8 +14,7 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
     [SerializeField] private Transform holdPoint;
 
     [Header("Pickup")]
-    [SerializeField] private float range = 3f;
-    [SerializeField] private float radius = 0.15f;
+    [SerializeField] private float distance;
     [SerializeField] private LayerMask pickupMask;
 
     [Header("Follow")]
@@ -49,7 +48,8 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
 
     private void OnTakePerformed(InputAction.CallbackContext ctx)
     {
-        if (heldItem == null)
+        Debug.Log($"[Take] нажатие. heldItem={(heldItem ? heldItem.name : "null")}");
+        if (heldItem == null) 
             TryTake();
     }
 
@@ -62,20 +62,10 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
     private void TryTake()
     {
         var ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
-
-        bool hitSomething = Physics.SphereCast(
-            ray,
-            radius,
-            out RaycastHit hit,
-            range,
-            pickupMask,
-            QueryTriggerInteraction.Ignore
-        );
+        var hitSomething = Physics.Raycast(ray, out RaycastHit hit, distance, pickupMask);
         Debug.Log($"TryTake: hitSomething={hitSomething}, hit={hit.collider?.name}");
         if (!hitSomething) return;
         if (!hit.collider.TryGetComponent(out Item item)) return;
-        
-
         heldItem = item;
     }
 

@@ -11,11 +11,16 @@ public class PlayerMovementController : NetworkBehaviour
 
     [Header("Visual Rotation")]
     [SerializeField] private Transform visual;
-    [SerializeField] private float rotationSpeed = 12f;
+    [SerializeField] private float rotationSpeed = 7f;
+
+    [Header("Ground")]
+    [SerializeField] private float walkSpeed = 4f;
+    [SerializeField] private float runSpeed = 20f;
 
     [Header("Swim")]
     [SerializeField] private float swimSpeed = 10f;
     [SerializeField] private float sprintSpeed = 20f;
+
     [SerializeField] private float verticalSpeed = 3f;
     [SerializeField] private float acceleration = 10f;
 
@@ -29,31 +34,28 @@ public class PlayerMovementController : NetworkBehaviour
     [SerializeField] private InputActionReference sprintAction;
 
     private bool inWater = false;
-    private Vector3 lastPosition;
 
     public override void OnStartClient()
     {
+        base.OnStartClient();
         if (!IsOwner)
         {
-            if (rb != null) rb.isKinematic = false;
+            rb.isKinematic = true;
             return;
         }
 
         rb.isKinematic = false;
-        rb.useGravity = false;
-        rb.linearDamping = waterDrag;
         rb.angularDamping = 5f;
         rb.freezeRotation = true;
-
+        ApplyMedium();
         moveAction.action.Enable();
         verticalAction.action.Enable();
         sprintAction.action.Enable();
-
-        lastPosition = transform.position;
     }
 
     public override void OnStopClient()
     {
+        base.OnStopClient();
         if (!IsOwner) return;
 
         moveAction.action.Disable();
@@ -61,52 +63,64 @@ public class PlayerMovementController : NetworkBehaviour
         sprintAction.action.Disable();
     }
 
+    private void Update()
+    {
+        if (!IsOwner) 
+            return;
+        RotateVisual();
+    }
+
     private void FixedUpdate()
     {
-        if (!IsOwner) return;
+        if (!IsOwner) 
+            return;
+        Move();
+    }
 
+    private void Move()
+    {
         var input = moveAction.action.ReadValue<Vector2>();
         var vertical = verticalAction.action.ReadValue<float>();
         var sprint = sprintAction.action.IsPressed();
 
-        var forward = cameraRoot.forward;
-        var right = cameraRoot.right;
+        var moveDir = cameraRoot.forward * input.y + cameraRoot.right * input.x;
+        Vector3 target;
 
-        var moveDir = forward * input.y + right * input.x;
+        if (inWater)
+        {
+            moveDir += Vector3.up * vertical;
+            if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
+            target = moveDir * (sprint ? sprintSpeed : swimSpeed);
+        }
+        else
+        {
+            moveDir.y = 0f;
+            if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
+            target = moveDir * (sprint ? runSpeed : walkSpeed);
+            target.y = rb.linearVelocity.y;
+        }
 
-        moveDir += Vector3.up * vertical;
+        rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, target, Time.fixedDeltaTime * acceleration);
+    }
 
-        if (moveDir.sqrMagnitude > 1f) moveDir.Normalize();
+    private void RotateVisual()
+    {
+        var targetYaw = cameraRoot.eulerAngles.y;
+        var t = 1f - Mathf.Exp(-rotationSpeed * Time.deltaTime);
+        var yaw = Mathf.LerpAngle(visual.eulerAngles.y, targetYaw, t);
+        visual.rotation = Quaternion.Euler(0f, yaw, 0f);
+    }
 
-        var speed = sprint ? sprintSpeed : swimSpeed;
-
-        var targetVelocity = moveDir * speed;
-        rb.linearVelocity = Vector3.Lerp(
-            rb.linearVelocity,
-            targetVelocity,
-            Time.fixedDeltaTime * acceleration
-        );
-
-        
-        var velocity = (transform.position - lastPosition) / Time.fixedDeltaTime;
-        lastPosition = transform.position;
-
-        var horizontal = new Vector3(velocity.x, 0f, velocity.z);
-
-        var targetYaw = horizontal.sqrMagnitude > 0.01f
-            ? Quaternion.LookRotation(horizontal).eulerAngles.y
-            : cameraRoot.eulerAngles.y;
-
-        var currentYaw = visual.eulerAngles.y;
-        var newYaw = Mathf.LerpAngle(currentYaw, targetYaw, Time.fixedDeltaTime * rotationSpeed);
-
-        visual.rotation = Quaternion.Euler(0f, newYaw, 0f);
+    private void ApplyMedium()
+    {
+        rb.useGravity = !inWater;
+        rb.linearDamping = inWater ? waterDrag : airDrag;
     }
 
     public void SetInWater(bool isInWater)
     {
         inWater = isInWater;
-        if (rb != null)
-            rb.linearDamping = inWater ? waterDrag : airDrag;
+        if (IsOwner)
+            ApplyMedium();   
     }
 }

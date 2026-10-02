@@ -1,4 +1,5 @@
-﻿using FishNet.Object;
+﻿using FishNet.Example.ColliderRollbacks;
+using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,24 +18,22 @@ public class PlayerCameraController : NetworkBehaviour
     [Header("Input")]
     [SerializeField] private InputActionReference lookAction;
 
+    private float yaw;
     private float pitch;
 
     public override void OnStartClient()
     {
+        base.OnStartClient();
         if (!IsOwner)
         {
-            if (camera != null) camera.enabled = false;
+            camera.gameObject.SetActive(false);
             return;
         }
 
+        yaw = transform.eulerAngles.y;
         lookAction.action.Enable();
-    }
-
-    public override void OnStopClient()
-    {
-        if (!IsOwner) return;
-
-        lookAction.action.Disable();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void LateUpdate()
@@ -42,11 +41,18 @@ public class PlayerCameraController : NetworkBehaviour
         if (!IsOwner) return;
 
         var look = lookAction.action.ReadValue<Vector2>();
+        yaw += look.x * sensitivity;
+        pitch = Mathf.Clamp(pitch - look.y * sensitivity, minPitch, maxPitch);
 
-        cameraRoot.Rotate(Vector3.up, look.x * sensitivity, Space.Self);
-
-         pitch -= look.y * sensitivity;
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        cameraRoot.rotation = Quaternion.Euler(0f, yaw, 0f); 
         cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+    }
+
+    public override void OnStopClient()
+    {
+        if (!IsOwner) return;
+        lookAction.action.Disable();
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 }

@@ -50,8 +50,8 @@ public class ShittySpawner : MonoBehaviour
     {
         if (!spawned.Add(conn)) return; // защита от дублей
 
-        Transform point = spawnPoints[(spawned.Count - 1) % spawnPoints.Length];
-        NetworkObject nob = Instantiate(playerPrefab, point.position, point.rotation);
+        var point = spawnPoints[(spawned.Count - 1) % spawnPoints.Length];
+        var nob = Instantiate(playerPrefab, point.position, point.rotation);
         UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(nob.gameObject, gameObject.scene);
         nm.ServerManager.Spawn(nob, conn);
     }
