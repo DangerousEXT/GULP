@@ -41,6 +41,11 @@ public class PlayerCameraController : NetworkBehaviour
     {
         if (!IsOwner) return;
 
+        Debug.Log($"LateUpdate: IsOwner={IsOwner}, " +
+          $"look={lookAction.action.ReadValue<Vector2>()}, " +
+          $"root={cameraRoot.name}, " +
+          $"rootEuler={cameraRoot.eulerAngles}");
+
         var look = lookAction.action.ReadValue<Vector2>();
 
         cameraRoot.Rotate(Vector3.up, look.x * sensitivity, Space.Self);
