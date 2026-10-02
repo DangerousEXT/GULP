@@ -10,12 +10,11 @@ public class PlayerAnimator : MonoBehaviour
 
     private void Update()
     {
-        Vector3 pos = transform.position;
-        Vector3 delta = pos - last;
+        var pos = transform.position;
+        var delta = pos - last;
         delta.y = 0;
         last = pos;
-
-        float speed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+        var speed = delta.magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
         animator.SetFloat(SpeedHash, speed, 0.1f, Time.deltaTime);
     }
 }
