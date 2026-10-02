@@ -38,12 +38,12 @@ public class PlayerMovementController : NetworkBehaviour
     public override void OnStartClient()
     {
         base.OnStartClient();
+        Debug.Log($"[Player] objId={ObjectId} owner={IsOwner} ownerId={OwnerId} name={name} scene={gameObject.scene.name}/{gameObject.scene.handle}");
         if (!IsOwner)
         {
             rb.isKinematic = true;
             return;
         }
-
         rb.isKinematic = false;
         rb.angularDamping = 5f;
         rb.freezeRotation = true;
@@ -56,8 +56,8 @@ public class PlayerMovementController : NetworkBehaviour
     public override void OnStopClient()
     {
         base.OnStopClient();
-        if (!IsOwner) return;
-
+        if (!IsOwner) 
+            return;
         moveAction.action.Disable();
         verticalAction.action.Disable();
         sprintAction.action.Disable();
@@ -82,7 +82,6 @@ public class PlayerMovementController : NetworkBehaviour
         var input = moveAction.action.ReadValue<Vector2>();
         var vertical = verticalAction.action.ReadValue<float>();
         var sprint = sprintAction.action.IsPressed();
-
         var moveDir = cameraRoot.forward * input.y + cameraRoot.right * input.x;
         Vector3 target;
 

@@ -50,6 +50,9 @@ public class ShittySpawner : MonoBehaviour
     {
         if (!spawned.Add(conn)) return; // защита от дублей
 
+        Debug.Log($"[Spawn] conn={conn.ClientId} spawner={GetInstanceID()} " +
+             $"scene={gameObject.scene.name}/{gameObject.scene.handle}\n{System.Environment.StackTrace}");
+
         var point = spawnPoints[(spawned.Count - 1) % spawnPoints.Length];
         var nob = Instantiate(playerPrefab, point.position, point.rotation);
         UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(nob.gameObject, gameObject.scene);
