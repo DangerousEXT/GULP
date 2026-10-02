@@ -71,7 +71,7 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
             pickupMask,
             QueryTriggerInteraction.Ignore
         );
-
+        Debug.Log($"TryTake: hitSomething={hitSomething}, hit={hit.collider?.name}");
         if (!hitSomething) return;
         if (!hit.collider.TryGetComponent(out Item item)) return;
         

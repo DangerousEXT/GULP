@@ -9,9 +9,13 @@ public class PlayerMovementController : NetworkBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Transform cameraRoot;
 
+    [Header("Visual Rotation")]
+    [SerializeField] private Transform visual;
+    [SerializeField] private float rotationSpeed = 12f;
+
     [Header("Swim")]
-    [SerializeField] private float swimSpeed = 4f;
-    [SerializeField] private float sprintSpeed = 7f;
+    [SerializeField] private float swimSpeed = 10f;
+    [SerializeField] private float sprintSpeed = 20f;
     [SerializeField] private float verticalSpeed = 3f;
     [SerializeField] private float acceleration = 10f;
 
@@ -25,6 +29,7 @@ public class PlayerMovementController : NetworkBehaviour
     [SerializeField] private InputActionReference sprintAction;
 
     private bool inWater = false;
+    private Vector3 lastPosition;
 
     public override void OnStartClient()
     {
@@ -43,6 +48,8 @@ public class PlayerMovementController : NetworkBehaviour
         moveAction.action.Enable();
         verticalAction.action.Enable();
         sprintAction.action.Enable();
+
+        lastPosition = transform.position;
     }
 
     public override void OnStopClient()
@@ -79,6 +86,21 @@ public class PlayerMovementController : NetworkBehaviour
             targetVelocity,
             Time.fixedDeltaTime * acceleration
         );
+
+        
+        var velocity = (transform.position - lastPosition) / Time.fixedDeltaTime;
+        lastPosition = transform.position;
+
+        var horizontal = new Vector3(velocity.x, 0f, velocity.z);
+
+        var targetYaw = horizontal.sqrMagnitude > 0.01f
+            ? Quaternion.LookRotation(horizontal).eulerAngles.y
+            : cameraRoot.eulerAngles.y;
+
+        var currentYaw = visual.eulerAngles.y;
+        var newYaw = Mathf.LerpAngle(currentYaw, targetYaw, Time.fixedDeltaTime * rotationSpeed);
+
+        visual.rotation = Quaternion.Euler(0f, newYaw, 0f);
     }
 
     public void SetInWater(bool isInWater)
