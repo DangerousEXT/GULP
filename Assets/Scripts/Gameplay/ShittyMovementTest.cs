@@ -21,20 +21,17 @@ public class ShittyMovementTest : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
-
-        Vector3 input = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        if (!IsOwner) 
+            return;
+        var input = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
         input = Vector3.ClampMagnitude(input, 1f);
-
         verticalVelocity = cc.isGrounded ? -2f : verticalVelocity + gravity * Time.deltaTime;
-
-        Vector3 move = input * speed;
+        var move = input * speed;
         move.y = verticalVelocity;
         cc.Move(move * Time.deltaTime);
-
         if (input.sqrMagnitude > 0.01f)
         {
-            Quaternion target = Quaternion.LookRotation(input);
+            var target = Quaternion.LookRotation(input);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, target, rotationSpeed * Time.deltaTime);
         }
     }
