@@ -25,15 +25,26 @@ public class PlayerMovementController : NetworkBehaviour
     [SerializeField] private float acceleration = 10f;
 
     [Header("Water")]
-    [SerializeField] private float waterDrag = 2f;
+    [SerializeField] private float waterDrag = 0.5f;
     [SerializeField] private float airDrag = 0.1f;
+    [Range(0f, 1f)] 
+    [SerializeField] private float waterGravityScale = 0.4f;
+
+    [Header("Jump")]
+    [SerializeField] private float jumpForce = 6f;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private float groundCheckRadius = 0.25f;
+    [SerializeField] private LayerMask groundMask;
 
     [Header("Input")]
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference verticalAction;
     [SerializeField] private InputActionReference sprintAction;
+    [SerializeField] private InputActionReference jumpAction;
 
     private bool inWater = false;
+    private bool isGrounded;
+    private bool jumpQueued;
 
     public override void OnStartClient()
     {
@@ -51,6 +62,8 @@ public class PlayerMovementController : NetworkBehaviour
         moveAction.action.Enable();
         verticalAction.action.Enable();
         sprintAction.action.Enable();
+        jumpAction.action.Enable();
+        jumpAction.action.performed += OnJumpPerformed;
     }
 
     public override void OnStopClient()
@@ -61,6 +74,7 @@ public class PlayerMovementController : NetworkBehaviour
         moveAction.action.Disable();
         verticalAction.action.Disable();
         sprintAction.action.Disable();
+        jumpAction.action.Disable();
     }
 
     private void Update()
@@ -68,6 +82,7 @@ public class PlayerMovementController : NetworkBehaviour
         if (!IsOwner) 
             return;
         RotateVisual();
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundMask);
     }
 
     private void FixedUpdate()
@@ -75,6 +90,30 @@ public class PlayerMovementController : NetworkBehaviour
         if (!IsOwner) 
             return;
         Move();
+        ApplyJump();
+        ApplyWaterGravity();
+    }
+
+    private void OnJumpPerformed(InputAction.CallbackContext ctx)
+    {
+        if (isGrounded && !inWater)
+            jumpQueued = true;
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (groundCheck == null) return;
+        Gizmos.color = isGrounded ? Color.green : Color.red;
+        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+    }
+
+    private void ApplyJump()
+    {
+        if (!jumpQueued)
+            return;
+        jumpQueued = false;
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
     }
 
     private void Move()
@@ -116,10 +155,19 @@ public class PlayerMovementController : NetworkBehaviour
         rb.linearDamping = inWater ? waterDrag : airDrag;
     }
 
+    private void ApplyWaterGravity()
+    {
+        if (!inWater) 
+            return;
+        rb.AddForce(Physics.gravity * waterGravityScale, ForceMode.Acceleration);
+    }
+
     public void SetInWater(bool isInWater)
     {
         inWater = isInWater;
         if (IsOwner)
-            ApplyMedium();   
+        {
+            ApplyMedium();
+        }
     }
 }

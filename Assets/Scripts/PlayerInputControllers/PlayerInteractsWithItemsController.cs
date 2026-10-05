@@ -1,6 +1,4 @@
-﻿using FishNet.Connection;
-using FishNet.Object;
-using NUnit.Framework.Internal.Execution;
+﻿using FishNet.Object;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,8 +22,8 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
 
     public override void OnStartClient()
     {
-        if (!IsOwner) return;
-
+        if (!IsOwner) 
+            return;
         takeAction.action.Enable();
         takeAction.action.performed += OnTakePerformed;
         takeAction.action.canceled += OnTakeCanceled;
@@ -33,8 +31,8 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
 
     public override void OnStopClient()
     {
-        if (!IsOwner) return;
-
+        if (!IsOwner) 
+            return;
         takeAction.action.performed -= OnTakePerformed;
         takeAction.action.canceled -= OnTakeCanceled;
         takeAction.action.Disable();
@@ -42,7 +40,8 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner) return;
+        if (!IsOwner) 
+            return;
         if (heldItem != null) UpdateHeldPosition();
     }
 
@@ -64,8 +63,10 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
         var ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         var hitSomething = Physics.Raycast(ray, out RaycastHit hit, distance, pickupMask);
         Debug.Log($"TryTake: hitSomething={hitSomething}, hit={hit.collider?.name}");
-        if (!hitSomething) return;
-        if (!hit.collider.TryGetComponent(out Item item)) return;
+        if (!hitSomething) 
+            return;
+        if (!hit.collider.TryGetComponent(out Item item)) 
+            return;
         heldItem = item;
     }
 
@@ -78,7 +79,6 @@ public class PlayerInteractsWithItemsController : NetworkBehaviour
     {
         var targetPos = holdPoint.position;
         var targetRot = mainCamera.transform.rotation;
-
         heldItem.transform.position = Vector3.Lerp(
             heldItem.transform.position,
             targetPos,

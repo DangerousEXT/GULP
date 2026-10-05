@@ -29,7 +29,6 @@ public class PlayerCameraController : NetworkBehaviour
             camera.gameObject.SetActive(false);
             return;
         }
-
         yaw = transform.eulerAngles.y;
         lookAction.action.Enable();
         Cursor.lockState = CursorLockMode.Locked;
@@ -38,19 +37,19 @@ public class PlayerCameraController : NetworkBehaviour
 
     private void LateUpdate()
     {
-        if (!IsOwner) return;
-
+        if (!IsOwner) 
+            return;
         var look = lookAction.action.ReadValue<Vector2>();
         yaw += look.x * sensitivity;
         pitch = Mathf.Clamp(pitch - look.y * sensitivity, minPitch, maxPitch);
-
         cameraRoot.rotation = Quaternion.Euler(0f, yaw, 0f); 
         cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
     }
 
     public override void OnStopClient()
     {
-        if (!IsOwner) return;
+        if (!IsOwner) 
+            return;
         lookAction.action.Disable();
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
